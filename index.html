@@ -1,0 +1,1061 @@
+```html
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+
+<title>Earth Clock – Astronomical Simulation</title>
+
+<style>
+html,body{
+    margin:0;
+    width:100%;
+    height:100%;
+    overflow:hidden;
+    background:#000;
+    font-family:"Segoe UI",Arial,sans-serif;
+}
+
+canvas{
+    display:block;
+}
+
+#clock{
+    position:fixed;
+    top:5vh;
+    left:50%;
+    transform:translateX(-50%);
+    text-align:center;
+    color:white;
+    z-index:10;
+    pointer-events:none;
+
+    text-shadow:
+        0 3px 25px rgba(0,0,0,.9),
+        0 0 35px rgba(80,160,255,.35);
+}
+
+#time{
+    font-size:clamp(50px,6vw,100px);
+    font-weight:300;
+    letter-spacing:.05em;
+}
+
+#date{
+    margin-top:10px;
+    font-size:clamp(15px,1.4vw,25px);
+    letter-spacing:.15em;
+    opacity:.8;
+}
+
+#info{
+    position:fixed;
+    right:25px;
+    bottom:25px;
+
+    color:white;
+    font-size:11px;
+    line-height:1.7;
+
+    opacity:.35;
+
+    text-align:right;
+
+    pointer-events:none;
+}
+
+#title{
+    position:fixed;
+    bottom:25px;
+    left:50%;
+    transform:translateX(-50%);
+
+    color:white;
+    opacity:.25;
+
+    font-size:11px;
+    letter-spacing:.3em;
+}
+</style>
+</head>
+
+<body>
+
+<div id="clock">
+    <div id="time">00:00:00</div>
+    <div id="date">Laden...</div>
+</div>
+
+<div id="info">
+    ASTRONOMICAL SIMULATION<br>
+    EARTH • MOON • SUN
+</div>
+
+<div id="title">
+    EARTH CLOCK
+</div>
+
+
+<script type="importmap">
+{
+    "imports":{
+        "three":"https://cdn.jsdelivr.net/npm/three@0.180.0/build/three.module.js"
+    }
+}
+</script>
+
+
+<script type="module">
+
+import * as THREE from "three";
+
+
+// ============================================================
+// KONSTANTEN
+// ============================================================
+
+const DEG =
+    Math.PI / 180;
+
+const TWO_PI =
+    Math.PI * 2;
+
+
+// Astronomische Zeit
+// ------------------------------------------------------------
+
+const SIDEREAL_DAY =
+    86164.0905;
+
+const SYNODIC_MONTH =
+    29.530588853 * 86400;
+
+const MOON_ORBIT =
+    27.321661 * 86400;
+
+
+// ============================================================
+// SZENE
+// ============================================================
+
+const scene =
+    new THREE.Scene();
+
+scene.background =
+    new THREE.Color(0x000108);
+
+
+// ============================================================
+// KAMERA
+// ============================================================
+
+const camera =
+    new THREE.PerspectiveCamera(
+        38,
+        innerWidth / innerHeight,
+        0.1,
+        100
+    );
+
+camera.position.set(
+    0,
+    0,
+    4.1
+);
+
+
+// ============================================================
+// RENDERER
+// ============================================================
+
+const renderer =
+    new THREE.WebGLRenderer({
+
+        antialias:true,
+
+        powerPreference:
+            "high-performance"
+
+    });
+
+renderer.setPixelRatio(
+    Math.min(
+        devicePixelRatio,
+        1.5
+    )
+);
+
+renderer.setSize(
+    innerWidth,
+    innerHeight
+);
+
+renderer.outputColorSpace =
+    THREE.SRGBColorSpace;
+
+renderer.toneMapping =
+    THREE.ACESFilmicToneMapping;
+
+renderer.toneMappingExposure =
+    1.05;
+
+document.body.appendChild(
+    renderer.domElement
+);
+
+
+// ============================================================
+// TEXTUREN
+// ============================================================
+
+const loader =
+    new THREE.TextureLoader();
+
+
+// ============================================================
+// ERDE
+// ============================================================
+
+const earthGroup =
+    new THREE.Group();
+
+scene.add(
+    earthGroup
+);
+
+
+const earthTexture =
+    loader.load(
+        "https://threejs.org/examples/textures/planets/earth_atmos_2048.jpg"
+    );
+
+earthTexture.colorSpace =
+    THREE.SRGBColorSpace;
+
+
+const earth =
+    new THREE.Mesh(
+
+        new THREE.SphereGeometry(
+            1,
+            128,
+            128
+        ),
+
+        new THREE.MeshPhongMaterial({
+
+            map:
+                earthTexture,
+
+            shininess:
+                10,
+
+            specular:
+                new THREE.Color(
+                    0x224466
+                )
+
+        })
+
+    );
+
+earthGroup.add(
+    earth
+);
+
+
+// ============================================================
+// WOLKEN
+// ============================================================
+
+const cloudTexture =
+    loader.load(
+        "https://threejs.org/examples/textures/planets/earth_clouds_1024.png"
+    );
+
+cloudTexture.colorSpace =
+    THREE.SRGBColorSpace;
+
+
+const clouds =
+    new THREE.Mesh(
+
+        new THREE.SphereGeometry(
+            1.012,
+            128,
+            128
+        ),
+
+        new THREE.MeshPhongMaterial({
+
+            map:
+                cloudTexture,
+
+            transparent:
+                true,
+
+            opacity:
+                0.78,
+
+            depthWrite:
+                false,
+
+            shininess:
+                2
+
+        })
+
+    );
+
+earthGroup.add(
+    clouds
+);
+
+
+// ============================================================
+// ATMOSPHÄRE
+// ============================================================
+
+const atmosphere =
+    new THREE.Mesh(
+
+        new THREE.SphereGeometry(
+            1.035,
+            128,
+            128
+        ),
+
+        new THREE.ShaderMaterial({
+
+            transparent:
+                true,
+
+            depthWrite:
+                false,
+
+            side:
+                THREE.BackSide,
+
+            uniforms:{
+
+                glow:{
+                    value:
+                        new THREE.Color(
+                            0x4da3ff
+                        )
+                }
+
+            },
+
+            vertexShader:`
+
+                varying vec3 vNormal;
+
+                void main(){
+
+                    vNormal =
+                        normalize(
+                            normalMatrix *
+                            normal
+                        );
+
+                    gl_Position =
+                        projectionMatrix *
+                        modelViewMatrix *
+                        vec4(
+                            position,
+                            1.0
+                        );
+                }
+
+            `,
+
+            fragmentShader:`
+
+                uniform vec3 glow;
+
+                varying vec3 vNormal;
+
+                void main(){
+
+                    float intensity =
+                        pow(
+                            0.72 -
+                            dot(
+                                vNormal,
+                                vec3(
+                                    0.0,
+                                    0.0,
+                                    1.0
+                                )
+                            ),
+                            3.2
+                        );
+
+                    gl_FragColor =
+                        vec4(
+                            glow,
+                            intensity * 0.75
+                        );
+                }
+
+            `
+
+        })
+
+    );
+
+earthGroup.add(
+    atmosphere
+);
+
+
+// ============================================================
+// MOND
+// ============================================================
+
+const moonOrbitGroup =
+    new THREE.Group();
+
+scene.add(
+    moonOrbitGroup
+);
+
+
+// tatsächliche visuelle Distanz
+const MOON_DISTANCE =
+    2.65;
+
+
+const moonTexture =
+    loader.load(
+        "https://threejs.org/examples/textures/planets/moon_1024.jpg"
+    );
+
+moonTexture.colorSpace =
+    THREE.SRGBColorSpace;
+
+
+const moon =
+    new THREE.Mesh(
+
+        new THREE.SphereGeometry(
+            0.27,
+            64,
+            64
+        ),
+
+        new THREE.MeshPhongMaterial({
+
+            map:
+                moonTexture,
+
+            shininess:
+                0,
+
+            specular:
+                new THREE.Color(
+                    0x111111
+                )
+
+        })
+
+    );
+
+moonOrbitGroup.add(
+    moon
+);
+
+
+// ============================================================
+// MONDLICHT / SONNENLICHT
+// ============================================================
+
+const sunLight =
+    new THREE.DirectionalLight(
+        0xffffff,
+        3.2
+    );
+
+scene.add(
+    sunLight
+);
+
+
+scene.add(
+    new THREE.AmbientLight(
+        0x18243a,
+        0.10
+    )
+);
+
+
+// ============================================================
+// STERNE
+// ============================================================
+
+const starGeometry =
+    new THREE.BufferGeometry();
+
+const starCount =
+    2400;
+
+const starPositions =
+    new Float32Array(
+        starCount * 3
+    );
+
+
+for(
+    let i = 0;
+    i < starCount;
+    i++
+){
+
+    const radius =
+        18 +
+        Math.random() * 25;
+
+    const angle =
+        Math.random() * TWO_PI;
+
+    const u =
+        Math.random() * 2 - 1;
+
+    const s =
+        Math.sqrt(
+            1 - u * u
+        );
+
+    starPositions[i * 3] =
+        radius *
+        s *
+        Math.cos(angle);
+
+    starPositions[i * 3 + 1] =
+        radius * u;
+
+    starPositions[i * 3 + 2] =
+        radius *
+        s *
+        Math.sin(angle);
+
+}
+
+
+starGeometry.setAttribute(
+
+    "position",
+
+    new THREE.BufferAttribute(
+        starPositions,
+        3
+    )
+
+);
+
+
+const stars =
+    new THREE.Points(
+
+        starGeometry,
+
+        new THREE.PointsMaterial({
+
+            color:
+                0xffffff,
+
+            size:
+                0.035,
+
+            sizeAttenuation:
+                true,
+
+            transparent:
+                true,
+
+            opacity:
+                0.8
+
+        })
+
+    );
+
+scene.add(
+    stars
+);
+
+
+// ============================================================
+// JULIANISCHES DATUM
+// ============================================================
+
+function julianDate(date){
+
+    return (
+        date.getTime() / 86400000
+    ) + 2440587.5;
+
+}
+
+
+// ============================================================
+// SONNENPOSITION
+// ============================================================
+//
+// Vereinfachtes astronomisches Modell.
+// Genau genug für eine visuelle Echtzeit-Simulation.
+//
+
+function calculateSunPosition(date){
+
+    const JD =
+        julianDate(date);
+
+    const T =
+        (JD - 2451545.0) /
+        36525;
+
+
+    // mittlere Sonnenlänge
+    let L =
+        280.460 +
+        36000.770 * T;
+
+    L =
+        ((L % 360) + 360) % 360;
+
+
+    // mittlere Anomalie
+    let M =
+        357.528 +
+        35999.050 * T;
+
+    M *= DEG;
+
+
+    // ekliptikale Länge
+    const lambda =
+        (
+            L +
+            1.915 *
+            Math.sin(M) +
+            0.020 *
+            Math.sin(2 * M)
+        ) * DEG;
+
+
+    // Erdachsenneigung
+    const epsilon =
+        (
+            23.4393 -
+            0.0130 * T
+        ) * DEG;
+
+
+    // Sonnenrichtung im äquatorialen System
+    const x =
+        Math.cos(lambda);
+
+    const y =
+        Math.cos(epsilon) *
+        Math.sin(lambda);
+
+    const z =
+        Math.sin(epsilon) *
+        Math.sin(lambda);
+
+
+    return new THREE.Vector3(
+        x,
+        z,
+        y
+    ).normalize();
+
+}
+
+
+// ============================================================
+// MONDPOSITION
+// ============================================================
+//
+// Vereinfachtes Modell des Mondes.
+//
+// Berücksichtigt:
+// - siderischen Monat
+// - Bahnneigung
+// - elliptische Bewegung
+//
+
+function calculateMoonPosition(date){
+
+    const JD =
+        julianDate(date);
+
+    const days =
+        JD - 2451545.0;
+
+
+    // mittlere Länge
+    let L =
+        218.316 +
+        13.176396 * days;
+
+
+    // mittlere Anomalie
+    let M =
+        134.963 +
+        13.064993 * days;
+
+
+    // auf 0...360 reduzieren
+    L =
+        ((L % 360) + 360) % 360;
+
+    M =
+        ((M % 360) + 360) % 360;
+
+
+    // vereinfachte Bahnstörung
+    const longitude =
+        (
+            L +
+            6.289 *
+            Math.sin(
+                M * DEG
+            )
+        ) * DEG;
+
+
+    // Breitengrad
+    const latitude =
+        5.128 *
+        Math.sin(
+            (
+                93.272 +
+                13.229350 * days
+            ) * DEG
+        ) * DEG;
+
+
+    // Abstand in relativen Einheiten
+    const distance =
+        2.65;
+
+
+    const x =
+        Math.cos(latitude) *
+        Math.cos(longitude);
+
+    const y =
+        Math.sin(latitude);
+
+    const z =
+        Math.cos(latitude) *
+        Math.sin(longitude);
+
+
+    return new THREE.Vector3(
+        x,
+        y,
+        z
+    ).normalize()
+    .multiplyScalar(
+        distance
+    );
+
+}
+
+
+// ============================================================
+// ERDROTATION
+// ============================================================
+
+function calculateEarthRotation(date){
+
+    const JD =
+        julianDate(date);
+
+
+    // Greenwich Mean Sidereal Time
+    let GMST =
+        280.46061837 +
+        360.98564736629 *
+        (JD - 2451545.0);
+
+
+    GMST =
+        ((GMST % 360) + 360) % 360;
+
+
+    return GMST * DEG;
+
+}
+
+
+// ============================================================
+// MONDPHASE
+// ============================================================
+
+function calculateMoonPhase(date){
+
+    const JD =
+        julianDate(date);
+
+    const days =
+        JD - 2451550.1;
+
+
+    let phase =
+        (
+            days /
+            (29.530588853)
+        );
+
+    phase =
+        phase -
+        Math.floor(phase);
+
+
+    return phase;
+
+}
+
+
+// ============================================================
+// UHR
+// ============================================================
+
+const timeElement =
+    document.getElementById(
+        "time"
+    );
+
+const dateElement =
+    document.getElementById(
+        "date"
+    );
+
+
+function updateClock(){
+
+    const now =
+        new Date();
+
+
+    timeElement.textContent =
+        now.toLocaleTimeString(
+            "de-DE",
+            {
+                hour12:false
+            }
+        );
+
+
+    dateElement.textContent =
+        now.toLocaleDateString(
+            "de-DE",
+            {
+                weekday:"long",
+                day:"2-digit",
+                month:"long",
+                year:"numeric"
+            }
+        );
+
+}
+
+
+updateClock();
+
+setInterval(
+    updateClock,
+    250
+);
+
+
+// ============================================================
+// SIMULATION
+// ============================================================
+
+function updateAstronomy(){
+
+    const now =
+        new Date();
+
+
+    // --------------------------------------------------------
+    // SONNE
+    // --------------------------------------------------------
+
+    const sunDirection =
+        calculateSunPosition(
+            now
+        );
+
+
+    // Lichtquelle weit außerhalb
+    sunLight.position.copy(
+        sunDirection
+        .multiplyScalar(20)
+    );
+
+
+    // --------------------------------------------------------
+    // ERDROTATION
+    // --------------------------------------------------------
+
+    const earthRotation =
+        calculateEarthRotation(
+            now
+        );
+
+
+    earth.rotation.y =
+        -earthRotation;
+
+
+    // --------------------------------------------------------
+    // WOLKEN
+    // --------------------------------------------------------
+
+    // Atmosphärische Winde:
+    // Wolken bewegen sich etwas schneller.
+    clouds.rotation.y =
+        -earthRotation * 1.015;
+
+
+    // --------------------------------------------------------
+    // MOND
+    // --------------------------------------------------------
+
+    const moonPosition =
+        calculateMoonPosition(
+            now
+        );
+
+
+    moon.position.copy(
+        moonPosition
+    );
+
+
+    // --------------------------------------------------------
+    // GEBUNDENE ROTATION
+    // --------------------------------------------------------
+
+    // Der Mond dreht sich synchron
+    // mit seinem Umlauf um die Erde.
+
+    const moonAngle =
+        Math.atan2(
+            moon.position.z,
+            moon.position.x
+        );
+
+
+    moon.rotation.y =
+        moonAngle;
+
+
+    // --------------------------------------------------------
+    // ERDACHSE
+    // --------------------------------------------------------
+
+    earthGroup.rotation.x =
+        23.44 * DEG;
+
+
+    // --------------------------------------------------------
+    // STERNE
+    // --------------------------------------------------------
+
+    stars.rotation.y =
+        earthRotation * 0.05;
+
+}
+
+
+// ============================================================
+// ANIMATION
+// ============================================================
+
+function animate(){
+
+    requestAnimationFrame(
+        animate
+    );
+
+
+    updateAstronomy();
+
+
+    renderer.render(
+        scene,
+        camera
+    );
+
+}
+
+
+animate();
+
+
+// ============================================================
+// RESIZE
+// ============================================================
+
+window.addEventListener(
+    "resize",
+    ()=>{
+
+        camera.aspect =
+            innerWidth /
+            innerHeight;
+
+        camera.updateProjectionMatrix();
+
+        renderer.setSize(
+            innerWidth,
+            innerHeight
+        );
+
+    }
+);
+
+
+// ============================================================
+// H = UHR EIN/AUS
+// ============================================================
+
+window.addEventListener(
+    "keydown",
+    event=>{
+
+        if(
+            event.key.toLowerCase()
+            === "h"
+        ){
+
+            const clock =
+                document.getElementById(
+                    "clock"
+                );
+
+
+            clock.style.opacity =
+                clock.style.opacity === "0"
+                ? "1"
+                : "0";
+
+        }
+
+    }
+);
+
+</script>
+
+</body>
+</html>
+```

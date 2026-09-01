@@ -53,6 +53,34 @@ Simply open `index.html` in a modern web browser.
 
 For the best experience, the project can also be hosted using GitHub Pages or another web server.
 
+## Using Earth Clock with Lively Wallpaper
+
+Earth Clock can be used as an animated desktop wallpaper with **Lively Wallpaper**.
+
+### Requirements
+
+* Windows
+* Lively Wallpaper
+* A working copy of the Earth Clock project
+
+### Setup
+
+1. Download or clone this repository.
+2. Make sure the project contains the `index.html` file.
+3. Open **Lively Wallpaper**.
+4. Add a new wallpaper using the **Add Wallpaper** option.
+5. Select the Earth Clock project's `index.html` file.
+6. Lively Wallpaper will load the HTML page as an interactive wallpaper.
+7. Select the wallpaper to apply it to your desktop.
+
+Because Earth Clock runs directly in the browser, no additional installation of the project itself is required.
+
+### GitHub Pages
+
+If the project is hosted with GitHub Pages, the published website can also be used as the source for the wallpaper, depending on the Lively Wallpaper version and configuration.
+
+The local `index.html` file is recommended because it does not depend on an internet connection after the project has been downloaded.
+
 ## Project Goals
 
 The goal of Earth Clock is to create a realistic and visually appealing Earth simulation that combines astronomical movement with a functional clock.

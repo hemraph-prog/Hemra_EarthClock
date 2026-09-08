@@ -1,6 +1,7 @@
 # Earth Clock
 
-Earth Clock is a dynamic 3D visualization of Earth that combines a real-time clock with an animated Earth, clouds, Moon, and dynamic sunlight.
+Earth Clock is a dynamic 3D visualization of Earth that combines a real-time clock with an animated Earth, clouds, Moon, and dynamic sunlight. 
+![EarthClock](Screenshot_2026-09-01_164630.png)
 
 The project aims to create a realistic and continuously changing view of Earth while combining it with a functional clock.
 

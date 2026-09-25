@@ -1007,8 +1007,7 @@ animate();
 
 window.addEventListener(
     "resize",
-    ()=>{
-
+    () => {
         camera.aspect =
             innerWidth /
             innerHeight;
@@ -1019,37 +1018,30 @@ window.addEventListener(
             innerWidth,
             innerHeight
         );
-
     }
 );
 
 
 // ============================================================
-// H = UHR EIN/AUS
+// TASTATUR-HILFE
 // ============================================================
 
 window.addEventListener(
     "keydown",
-    event=>{
-
+    event => {
         if(
-            event.key.toLowerCase()
-            === "h"
+            event.key.toLowerCase() === "h"
         ){
-
             const clock =
                 document.getElementById(
                     "clock"
                 );
 
-
             clock.style.opacity =
                 clock.style.opacity === "0"
-                ? "1"
-                : "0";
-
+                    ? "1"
+                    : "0";
         }
-
     }
 );
 

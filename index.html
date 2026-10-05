@@ -129,9 +129,6 @@ const MOON_ORBIT =
     27.321661 * 86400;
 
 
-// ============================================================
-// SZENE
-// ============================================================
 
 const scene =
     new THREE.Scene();
@@ -139,10 +136,6 @@ const scene =
 scene.background =
     new THREE.Color(0x000108);
 
-
-// ============================================================
-// KAMERA
-// ============================================================
 
 const camera =
     new THREE.PerspectiveCamera(
@@ -158,10 +151,6 @@ camera.position.set(
     4.1
 );
 
-
-// ============================================================
-// RENDERER
-// ============================================================
 
 const renderer =
     new THREE.WebGLRenderer({
@@ -199,17 +188,10 @@ document.body.appendChild(
 );
 
 
-// ============================================================
-// TEXTUREN
-// ============================================================
-
 const loader =
     new THREE.TextureLoader();
 
 
-// ============================================================
-// ERDE
-// ============================================================
 
 const earthGroup =
     new THREE.Group();
@@ -259,9 +241,6 @@ earthGroup.add(
 );
 
 
-// ============================================================
-// WOLKEN
-// ============================================================
 
 const cloudTexture =
     loader.load(
@@ -305,11 +284,6 @@ const clouds =
 earthGroup.add(
     clouds
 );
-
-
-// ============================================================
-// ATMOSPHÄRE
-// ============================================================
 
 const atmosphere =
     new THREE.Mesh(
@@ -405,19 +379,13 @@ earthGroup.add(
 );
 
 
-// ============================================================
-// MOND
-// ============================================================
-
 const moonOrbitGroup =
     new THREE.Group();
 
 scene.add(
     moonOrbitGroup
 );
-
-
-// tatsächliche visuelle Distanz
+    
 const MOON_DISTANCE =
     2.65;
 
@@ -459,12 +427,7 @@ const moon =
 
 moonOrbitGroup.add(
     moon
-);
-
-
-// ============================================================
-// MONDLICHT / SONNENLICHT
-// ============================================================
+    );
 
 const sunLight =
     new THREE.DirectionalLight(
@@ -485,9 +448,6 @@ scene.add(
 );
 
 
-// ============================================================
-// STERNE
-// ============================================================
 
 const starGeometry =
     new THREE.BufferGeometry();
@@ -594,13 +554,6 @@ function julianDate(date){
 }
 
 
-// ============================================================
-// SONNENPOSITION
-// ============================================================
-//
-// Vereinfachtes astronomisches Modell.
-// Genau genug für eine visuelle Echtzeit-Simulation.
-//
 
 function calculateSunPosition(date){
 
@@ -670,17 +623,6 @@ function calculateSunPosition(date){
 }
 
 
-// ============================================================
-// MONDPOSITION
-// ============================================================
-//
-// Vereinfachtes Modell des Mondes.
-//
-// Berücksichtigt:
-// - siderischen Monat
-// - Bahnneigung
-// - elliptische Bewegung
-//
 
 function calculateMoonPosition(date){
 
@@ -762,9 +704,6 @@ function calculateMoonPosition(date){
 }
 
 
-// ============================================================
-// ERDROTATION
-// ============================================================
 
 function calculateEarthRotation(date){
 
